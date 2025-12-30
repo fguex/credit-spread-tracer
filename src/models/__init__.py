@@ -1,3 +1,7 @@
-from .ridge_model import *
+"""Models package.
 
-__all__ = ["ridge_model"]
+Currently `ridge_model.py` is a placeholder. Import model classes explicitly
+from their modules when they are implemented to avoid star imports.
+"""
+
+__all__ = []

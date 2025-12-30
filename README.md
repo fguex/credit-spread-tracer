@@ -1,111 +1,93 @@
-# Credit Spread Regime Analysis
+# Mean Reversion in Investment-Grade Credit Spreads
 
-Quantitative research demonstrating regime-dependent mean-reversion inefficiencies in US corporate credit spreads.
+**Research Question**: Is mean reversion in investment-grade credit spreads conditional on dealer balance-sheet constraints?
 
-## Overview
+## �� Quick Start
 
-This project identifies a systematic inefficiency in credit spread dynamics: spreads exhibit mean-reversion in normal markets (78% of days) and momentum in crises (2% of days). A regime-aware trading strategy exploiting this finding achieves 203% better PnL than naive momentum.
+### View the Analysis
 
-## Key Finding
+```bash
+jupyter notebook notebooks/03_mean_reversion_analysis.ipynb
+```
 
-| Regime | Days | Behavior | Strategy |
-|--------|------|----------|----------|
-| **Normal** (Clusters 0-2) | 78% | Mean-Reversion | Invert signal |
-| **Stress** (Cluster 3) | 2% | Momentum | Keep signal |
+This notebook contains:
+- HMM regime identification (3 regimes)
+- Mean-reversion tests by regime (median regression)
+- Bootstrap confidence intervals (B=1,000)
+- Cross-regime robustness checks
 
-### Results
+**Runtime**: ~2–3 minutes (bootstrap included)
 
-| Strategy | Cum PnL | Hit Ratio | Improvement |
-|----------|---------|-----------|-------------|
-| Naive Momentum | -$37 | 40.4% | Baseline |
-| Regime-Aware Inversion | +$38 | 45.6% | +$75 (+203%) |
+## 📊 Key Results
 
-## Methodology
+**Normal Regime** (36% of sample, n=401):
+- **β = -0.165** (95% CI: [-0.200, -0.125]) ✅ Significantly negative
+- **Half-life ≈ 4 days** (95% CI: [3.5, 5.5]) — fast mean reversion
+- **Conclusion**: Strong, reliable mean reversion
 
-**Regime Identification**:
-1. Standardize macro features (S_t, ΔS_t, VIX_t, YC_slope_t, vol_dS_10d)
-2. Fit K-Means (k=4) on training data only (2016-2018) — lookahead-safe
-3. Assign clusters to full sample
-4. Characterize each regime by mean feature values
+**Low Stress Regime** (60%, n=665):
+- Weaker mean reversion (smaller |β|)
 
-**Signal Inversion Test**:
-1. Compute naive momentum hit ratio per regime: sign(ΔS_lag1) == sign(y_target)
-2. In regimes with hit ratio < 50% (mean-reversion), invert signal
-3. In regimes with hit ratio > 50% (momentum), keep signal
-4. Compare baseline vs regime-aware PnL
+**High Stress Regime** (3%, n=37, crises only):
+- Insufficient data (mean reversion weakens or breaks down)
 
-## Main Notebook
-
-**File**: `notebooks/03_regime_analysis.ipynb`
-
-Six focused sections:
-1. Setup & Data Loading
-2. Exploratory Data Analysis
-3. K-Means Clustering & Regime Identification
-4. Regime Characterization: Mean-Reversion vs Momentum
-5. Quantitative Evidence: Hit Ratio Analysis
-6. Conclusions & Path Forward
-
-## Statistical Rigor
-
-- Hit ratio difference: 45.6% vs 40.4% (significant at p < 0.001)
-- PnL improvement: +$75 (+203%)
-- Sample size: 1,000+ days per regime
-- Economic rationale: Liquidity in normal markets → fair-value reversion; contagion in crises → momentum
-
-## Implementation Status
-
-**Complete**:
-- Regime identification and characterization
-- Mean-reversion vs momentum quantification
-- Signal inversion validation
-
-**Pending**:
-- Prediction module (Ridge with regime dummies)
-- Trading strategy module (position sizing, costs)
-- Out-of-sample validation (2019-2026)
-
-## Data & Dependencies
-
-**Source**: ICE BofA US Corporate OAS (daily, 2016-2024)  
-**Features**: DGS10, DGS2, VIX, S&P 500 returns
-
-**Python**: pandas, numpy, scikit-learn, matplotlib, seaborn, scipy
-
-**Note**: Data files (.csv, .parquet) are excluded from git. Pipeline regenerates data via `src/features/build_features.py`.
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 notebooks/
-├── 03_regime_analysis.ipynb          Main analysis
-├── 01_eda.ipynb                      Exploratory analysis
-└── 02_clustering_eda.ipynb           Detailed clustering work
-
-src/
-├── features/build_features.py        Data pipeline
-├── prediction/                       To be implemented
-└── trading/                          To be implemented
+  └─ 03_mean_reversion_analysis.ipynb     ← Main analysis (START HERE)
+data/processed/
+  └─ full_processed_data_hmm.csv          (HMM regimes + features)
+results/tables/
+  ├─ regime_summary.csv
+  ├─ regime_transitions.csv
+  ├─ conditional_tests.csv
+  ├─ bootstrap_normal_10d_summary.json
+  └─ [plots & additional outputs]
+HANDOFF.md                                 ← Full project summary
 ```
 
-## Getting Started
+## 🔍 Methodology
 
-View main findings:
+**Data**: BAMLC0A0CM (IG spread), VIX, STLFSI, realized vol; 1,103 obs (2007–2025)
+
+**Regimes**: Gaussian HMM (3 regimes identified via EM algorithm)
+- Low Stress (60%), Normal (36%), High Stress (3%)
+- Features: VIX, STLFSI, realized vol, order flow, interactions
+
+**Regression**: Median regression (quantile q=0.5) + Bootstrap (B=1,000)
+- Robust to outliers (fat-tailed financial data)
+- Nonparametric 95% confidence intervals
+
+**Model**: ΔS_{t+h} = α + β S_t + ε
+- H₀: β = 0 vs H₁: β < 0 (mean reversion)
+
+## 📋 Setup
+
 ```bash
-jupyter notebook notebooks/03_regime_analysis.ipynb
+# Create and activate environment
+python -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run notebook
+jupyter notebook notebooks/03_mean_reversion_analysis.ipynb
 ```
 
-## Next Steps
+## 📚 Documentation
 
-**Phase 1: Prediction Module** (5-7 hours)
-Ridge regression with regime dummies, expanding-window backtest.
+- **`HANDOFF.md`** — Executive summary & project overview
+- **`notebooks/INDEX.md`** — Notebook guide & navigation
+- **`notebooks/NOTEBOOK_README.md`** — Cell-by-cell breakdown
 
-**Phase 2: Trading Strategy** (3-4 hours)
-Position sizing, transaction cost analysis, performance tracking.
+## ⏭️ Next Steps
 
-**Phase 3: Validation** (3-4 hours)
-Out-of-sample testing, stress testing, deployment readiness.
+1. **Validate regime labels** — Confirm High Stress = 2008 GFC, 2020 COVID
+2. **Out-of-sample test** — Forecast 2021–2024 data; measure realized returns
+3. **Model extensions** — Add controls; test 4-regime HMM; cross-market validation
 
 ---
 
-**Status**: Regime analysis complete. Ready for production implementation.
+**Status**: ✅ Ready for presentation | **Last Updated**: December 2025

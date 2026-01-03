@@ -15,7 +15,7 @@ TARGET_SERIES = "BAMLC0A0CM"  # ICE BofA US Corporate Master OAS
 # Observable proxies for market stress / liquidity conditions (HMM features)
 OBSERVABLES = {
     "VIX": "VIXCLS",           # Implied volatility (fear gauge)
-    "STLFSI": "STLFSI",        # St. Louis Fed Financial Stress Index
+    "ANFCI": "ANFCI",          # Adjusted National Financial Conditions Index (replaces STLFSI)
     "MOVE": "MOVE",            # Bond market volatility (Merrill Lynch Option Volatility Estimate)
     "TED": None,               # TED spread (3m LIBOR - 3m T-bill) - computed from components
     # Realized volatility of spreads (computed)
@@ -27,15 +27,15 @@ ADDITIONAL = {
     "DGS10": "DGS10",          # 10Y Treasury yield
     "DGS2": "DGS2",            # 2Y Treasury yield (for term spread)
     "DGS3MO": "DGS3MO",        # 3-month T-bill rate (for TED spread)
-    "SP500": "SP500",          # Equity index (for risk-on/risk-off)
     "DTWEXBGS": "DTWEXBGS",    # Trade-weighted dollar index (funding conditions)
+    # SP500 removed - not used in HMM, incomplete historical data
 }
 
 # =============================================================================
 # SAMPLE PERIOD
 # =============================================================================
 
-START_DATE = "2007-01-01"  # Start of Global Financial Crisis
+START_DATE = "2015-01-01"  # Post-taper period (excludes GFC structural break)
 END_DATE = "2025-12-31"    # Use data through end of 2025
 
 # =============================================================================
@@ -44,7 +44,7 @@ END_DATE = "2025-12-31"    # Use data through end of 2025
 
 # HMM specification for regime identification
 HMM_CONFIG = {
-    "n_regimes": 3,                    # Low stress, Normal, High stress (now with more data)
+    "n_regimes": 2,                    # Normal vs High Stress (2-regime model for trading)
     "n_iter": 100,                     # EM algorithm iterations
     "random_state": 42,                # Reproducibility
     "covariance_type": "full",         # Full covariance per regime
@@ -58,7 +58,7 @@ HMM_FEATURES = {
     "realized_vol_window": 21,         # 21-day realized volatility of spreads
     "abs_change_window": 5,            # 5-day rolling mean of |ΔS_t|
     "stress_interaction": True,        # Include VIX × STLFSI interaction
-    "standardize": True,               # Z-score normalize features
+    "standardize": False,              # Z-score normalize features (DISABLED: raw values work better)
 }
 
 # =============================================================================
@@ -85,11 +85,10 @@ REGIME_QUANTILES = {
     "high_stress": 0.67,   # x_t > 67th percentile = high stress (low liquidity)
 }
 
-# Regime labels
+# Regime labels (2-regime model)
 REGIME_NAMES = {
-    0: "Low Stress (High Liquidity)",
-    1: "Normal",
-    2: "High Stress (Low Liquidity)",
+    0: "Normal (Low/Medium Stress)",
+    1: "High Stress (Crisis)",
 }
 
 # =============================================================================

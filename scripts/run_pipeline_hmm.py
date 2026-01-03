@@ -67,6 +67,10 @@ def main(fetch_fresh_data: bool = False):
         print("Using cached data...")
     
     raw_data = load_raw_data()
+
+    # Filter to START_DATE (config-driven sample period)
+    raw_data = raw_data[raw_data.index >= START_DATE]
+
     print(f"Loaded {len(raw_data)} observations, {len(raw_data.columns)} series")
     print(f"Date range: {raw_data.index.min()} to {raw_data.index.max()}")
     
